@@ -42,7 +42,7 @@ jobs:
         id: upstream_info
         run: |
           # Get latest tag
-          LATEST_TAG=$(git ls-remote --tags --sort=-committerdate upstream | head -n 1 | sed 's/.*refs\/tags\///')
+          LATEST_TAG=$(git ls-remote --tags --sort=-committerdate upstream | head -n 1 | sed 's/.*refs\/tags\///' | sed 's/\^{}//')
           echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
           echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
 
