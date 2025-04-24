@@ -21,6 +21,8 @@
 !.eslintrc
 !.env-cmdrc
 !.eslintignore
+!.github
+!.github/workflows/cd-update.yaml
 
 # upload directory : whole except the index.html and readme.txt
 /upload/*.*
