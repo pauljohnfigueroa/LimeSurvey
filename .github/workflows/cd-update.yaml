@@ -204,12 +204,14 @@ jobs:
           fi
           
           # Push changes
-          # git push origin $CURRENT_BRANCH
-          # git push origin --tags
+          git pull --rebase origin $(git branch --show-current)
+          git push origin $CURRENT_BRANCH
+          git push origin --tags
 
       - name: Update state file
         if: success() && steps.check_update.outputs.update_needed == 'true'
         run: |
+          git pull --rebase origin $(git branch --show-current)
           mkdir -p .github
           cat > .github/limesurvey_state.json << EOF
           {
@@ -218,7 +220,6 @@ jobs:
             "last_updated": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           }
           EOF
-          git pull --rebase origin $(git branch --show-current)
           git add .github/limesurvey_state.json
           git commit -m "Update LimeSurvey state tracking [skip ci]"
           git push origin $(git branch --show-current)
