@@ -3,7 +3,7 @@ name: LimeSurvey Update and Tag
 on:
   # Run on a schedule (every day at 12:20PM PHT)
   schedule:
-    - cron: '20 5 * * *'
+    - cron: '0 1 * * *'
   # Allow manual triggering
   workflow_dispatch:
     inputs:
@@ -99,7 +99,7 @@ jobs:
           
           # Pull
           if [ "$UPDATE_METHOD" = "rebase" ]; then
-              git pull --rebase upstream master"
+              git pull --rebase upstream master
           fi
 
           # Optionally push to your fork if needed
