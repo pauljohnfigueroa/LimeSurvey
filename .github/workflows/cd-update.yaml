@@ -224,6 +224,11 @@ jobs:
           git commit -m "Update LimeSurvey state tracking [skip ci]"
           git push origin $(git branch --show-current)
 
+      - name: Build asset
+        if: success() && steps.check_update.outputs.update_needed == 'true'
+        run: |
+          git archive --prefix=limesurvey/ -o limesurvey.zip ${{ env.MASTER_SHA }}
+          echo "Building asset was successll"
       - name: No updates needed
         if: steps.check_update.outputs.update_needed != 'true'
         run: echo "No updates needed. Everything is up to date."
