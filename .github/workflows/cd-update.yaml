@@ -3,7 +3,7 @@ name: LimeSurvey Update and Tag
 on:
   # Run on a schedule (every day at 12:20PM PHT)
   schedule:
-    - cron: '20 4 * * *'
+    - cron: '20 5 * * *'
   # Allow manual triggering
   workflow_dispatch:
     inputs:
@@ -14,7 +14,7 @@ on:
       update_method:
         description: 'Update method to use'
         type: choice
-        options: [rebase, merge, reset]
+        options: [rebase]
         default: 'rebase'
 
 jobs:
@@ -38,28 +38,76 @@ jobs:
           git fetch upstream
           git fetch upstream --tags
 
-      - name: Get latest upstream tag and commit
-        id: upstream_info
+      - name: Check for "Release" commit in upstream/master
+        id: check_commit
         run: |
-          # Get latest tag
-          LATEST_TAG=$(git ls-remote --tags --sort=-committerdate upstream | head -n 1 | sed 's/.*refs\/tags\///' | sed 's/\^{}//')
+          # Check for commits with "Release" in the message that are not in origin/master
+          RELEASE_COMMIT=$(git log origin/master..upstream/master --grep="Release" --oneline)
+
+          if [[ -n "$RELEASE_COMMIT" ]]; then
+            echo "Found release commit(s):"
+            echo "$RELEASE_COMMIT"
+            echo "should_pull=true" >> $GITHUB_OUTPUT
+          else
+            echo "No new release commit found."
+            echo "should_pull=false" >> $GITHUB_OUTPUT
+          fi
+
+      # - name: Get latest upstream tag and commit
+      #   id: upstream_info
+      #   run: |
+      #     # Get latest tag
+      #     LATEST_TAG=$(git ls-remote --tags --sort=-committerdate upstream | head -n 1 | sed 's/.*refs\/tags\///' | sed 's/\^{}//')
+      #     echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
+      #     echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+
+      #     # Get latest master commit SHA hash
+      #     MASTER_SHA=$(git ls-remote upstream HEAD | cut -f1)
+      #     echo "MASTER_SHA=$MASTER_SHA" >> $GITHUB_ENV
+      #     echo "master_sha=$MASTER_SHA" >> $GITHUB_OUTPUT
+          
+      #     # Get the latest master commit date and message
+      #     git fetch upstream master
+      #     MASTER_DATE=$(git log -1 --format=%cd --date=format:%y%m%d upstream/master)
+      #     MASTER_MESSAGE=$(git log -1 --format=%s upstream/master)
+      #     echo "MASTER_DATE=$MASTER_DATE" >> $GITHUB_ENV
+      #     echo "MASTER_MESSAGE=$MASTER_MESSAGE" >> $GITHUB_ENV
+
+      - name: Pull changes from upstream if release commit is found
+        if: steps.check_commit.outputs.should_pull == 'true'
+        run: |
+          # Get latest master Release tag
+          # LATEST_TAG=$(git ls-remote --tags --sort=-committerdate upstream | head -n 1 | sed 's/.*refs\/tags\///' | sed 's/\^{}//')
+          LATEST_TAG=$(git log -1 --format=%s origin/master..upstream/master --grep="Release" | awk '{print $2}')
           echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
           echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
 
-          # Get latest master commit SHA hash
-          MASTER_SHA=$(git ls-remote upstream HEAD | cut -f1)
+          # Get latest master Release commit SHA hash
+          # MASTER_SHA=$(git ls-remote upstream HEAD | cut -f1)
+          MASTER_SHA=$(git log origin/master..upstream/master --grep="Release" --oneline | awk '{print $1}')
           echo "MASTER_SHA=$MASTER_SHA" >> $GITHUB_ENV
           echo "master_sha=$MASTER_SHA" >> $GITHUB_OUTPUT
-          
-          # Get the latest master commit date and message
+
+          # Get the master Release commit date and message
           git fetch upstream master
-          MASTER_DATE=$(git log -1 --format=%cd --date=format:%y%m%d upstream/master)
-          MASTER_MESSAGE=$(git log -1 --format=%s upstream/master)
+          # MASTER_DATE=$(git log -1 --format=%cd --date=format:%y%m%d upstream/master)
+          MASTER_DATE=$(git log -1 --format=%cd --date=format:%y%m%d origin/master..upstream/master --grep="Release")
+          # MASTER_MESSAGE=$(git log -1 --format=%s upstream/master)
+          MASTER_MESSAGE=$(git log -1 --format=%s origin/master..upstream/master --grep="Release")
           echo "MASTER_DATE=$MASTER_DATE" >> $GITHUB_ENV
           echo "MASTER_MESSAGE=$MASTER_MESSAGE" >> $GITHUB_ENV
+          
+          # Pull
+          if [ "$UPDATE_METHOD" = "rebase" ]; then
+              git pull --rebase upstream master"
+          fi
+
+          # Optionally push to your fork if needed
+          # git push origin master
 
       - name: Read last state
         id: last_state
+        if: success()
         run: |
           if [ -f .github/limesurvey_state.json ]; then
             LAST_TAG=$(jq -r '.last_tag' .github/limesurvey_state.json)
@@ -75,6 +123,7 @@ jobs:
           echo "last_master_sha=$LAST_SHA" >> $GITHUB_OUTPUT
 
       - name: Determine if update needed
+        if: success()
         id: check_update
         run: |
           # Initialize variables
@@ -133,7 +182,7 @@ jobs:
           fi
 
       - name: Update and tag
-        if: steps.check_update.outputs.update_needed == 'true'
+        if: success() && steps.check_update.outputs.update_needed == 'true'
         run: |
           echo "Updating fork with upstream changes..."
           
@@ -170,7 +219,6 @@ jobs:
           # Create custom tag
           if [ "${{ steps.check_update.outputs.custom_tag }}" != "" ]; then
             echo "Creating harmonized tag: ${{ steps.check_update.outputs.custom_tag }}"
-            
             if [[ "${{ steps.check_update.outputs.custom_tag }}" == master+* ]]; then
               git tag -a "${{ steps.check_update.outputs.custom_tag }}" -m "Harmonized tag from upstream master ${{ env.MASTER_SHA }}"
             else
