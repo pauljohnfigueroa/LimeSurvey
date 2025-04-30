@@ -96,14 +96,6 @@ jobs:
           MASTER_MESSAGE=$(git log -1 --format=%s origin/master..upstream/master --grep="Release")
           echo "MASTER_DATE=$MASTER_DATE" >> $GITHUB_ENV
           echo "MASTER_MESSAGE=$MASTER_MESSAGE" >> $GITHUB_ENV
-          
-          # Pull
-          if [ "$UPDATE_METHOD" = "rebase" ]; then
-              git pull --rebase upstream master
-          fi
-
-          # Optionally push to your fork if needed
-          # git push origin master
 
       - name: Read last state
         id: last_state
@@ -194,25 +186,9 @@ jobs:
           
           # If tag changed, update to tag
           if [ "${{ steps.check_update.outputs.tag_changed }}" = "true" ]; then
-            echo "Updating to latest tag: ${{ env.LATEST_TAG }}"
-            
-            # Perform update based on chosen method
+            echo "Updating to latest Release: ${{ env.LATEST_TAG }}"
             if [ "$UPDATE_METHOD" = "rebase" ]; then
-              git pull --rebase upstream "refs/tags/${{ env.LATEST_TAG }}"
-            elif [ "$UPDATE_METHOD" = "merge" ]; then
-              git merge "refs/tags/${{ env.LATEST_TAG }}" --no-edit
-            else # reset
-              git reset --hard "refs/tags/${{ env.LATEST_TAG }}"
-            fi
-          else
-            # Otherwise update to master
-            echo "Updating to latest master commit"
-            if [ "$UPDATE_METHOD" = "rebase" ]; then
-              git pull --rebase upstream master
-            elif [ "$UPDATE_METHOD" = "merge" ]; then
-              git merge upstream/master --no-edit
-            else # reset
-              git reset --hard upstream/master
+                git pull --rebase upstream master
             fi
           fi
           
