@@ -187,6 +187,7 @@ jobs:
           # If tag changed, update to tag
           if [ "${{ steps.check_update.outputs.tag_changed }}" = "true" ]; then
             echo "Updating to latest Release: ${{ env.LATEST_TAG }}"
+            # Pull
             if [ "$UPDATE_METHOD" = "rebase" ]; then
                 git pull --rebase upstream master
             fi
@@ -203,11 +204,11 @@ jobs:
           fi
           
           # Push changes
-          git push origin $CURRENT_BRANCH
-          git push origin --tags
+          # git push origin $CURRENT_BRANCH
+          # git push origin --tags
 
       - name: Update state file
-        if: steps.check_update.outputs.update_needed == 'true'
+        if: success() && steps.check_update.outputs.update_needed == 'true'
         run: |
           mkdir -p .github
           cat > .github/limesurvey_state.json << EOF
