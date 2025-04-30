@@ -218,7 +218,7 @@ jobs:
             "last_updated": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           }
           EOF
-          
+          git pull --rebase origin $(git branch --show-current)
           git add .github/limesurvey_state.json
           git commit -m "Update LimeSurvey state tracking [skip ci]"
           git push origin $(git branch --show-current)
