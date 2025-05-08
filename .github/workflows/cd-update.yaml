@@ -3,7 +3,7 @@ name: LimeSurvey Update and Tag
 on:
   # Run on a schedule (every day at 12:20PM PHT)
   schedule:
-    - cron: '0 1 * * *'
+    - cron: '0 1 * * 4-5'
   # Allow manual triggering
   workflow_dispatch:
     inputs:
@@ -27,208 +27,208 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Git Config
-        run: |
-          git config --global user.name "Paul Figueroa"
-          git config --global user.email "paul.figueroa@coredataresearch.com"
-
-      - name: Setup upstream remote
-        run: |
-          git remote add upstream https://github.com/LimeSurvey/LimeSurvey.git
-          git fetch upstream
-          git fetch upstream --tags
-
-      - name: Check for "Release" commit in upstream/master
-        id: check_commit
-        run: |
-          # Check for commits with "Release" in the message that are not in origin/master
-          RELEASE_COMMIT=$(git log origin/master..upstream/master --grep="Release" --oneline)
-
-          if [[ -n "$RELEASE_COMMIT" ]]; then
-            echo "Found release commit(s):"
-            echo "$RELEASE_COMMIT"
-            echo "should_pull=true" >> $GITHUB_OUTPUT
-          else
-            echo "No new release commit found."
-            echo "should_pull=false" >> $GITHUB_OUTPUT
-          fi
-
-      # - name: Get latest upstream tag and commit
-      #   id: upstream_info
+      # - name: Set up Git Config
       #   run: |
-      #     # Get latest tag
-      #     LATEST_TAG=$(git ls-remote --tags --sort=-committerdate upstream | head -n 1 | sed 's/.*refs\/tags\///' | sed 's/\^{}//')
+      #     git config --global user.name "Paul Figueroa"
+      #     git config --global user.email "paul.figueroa@coredataresearch.com"
+
+      # - name: Setup upstream remote
+      #   run: |
+      #     git remote add upstream https://github.com/LimeSurvey/LimeSurvey.git
+      #     git fetch upstream
+      #     git fetch upstream --tags
+
+      # - name: Check for "Release" commit in upstream/master
+      #   id: check_commit
+      #   run: |
+      #     # Check for commits with "Release" in the message that are not in origin/master
+      #     RELEASE_COMMIT=$(git log origin/master..upstream/master --grep="Release" --oneline)
+
+      #     if [[ -n "$RELEASE_COMMIT" ]]; then
+      #       echo "Found release commit(s):"
+      #       echo "$RELEASE_COMMIT"
+      #       echo "should_pull=true" >> $GITHUB_OUTPUT
+      #     else
+      #       echo "No new release commit found."
+      #       echo "should_pull=false" >> $GITHUB_OUTPUT
+      #     fi
+
+      # # - name: Get latest upstream tag and commit
+      # #   id: upstream_info
+      # #   run: |
+      # #     # Get latest tag
+      # #     LATEST_TAG=$(git ls-remote --tags --sort=-committerdate upstream | head -n 1 | sed 's/.*refs\/tags\///' | sed 's/\^{}//')
+      # #     echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
+      # #     echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+
+      # #     # Get latest master commit SHA hash
+      # #     MASTER_SHA=$(git ls-remote upstream HEAD | cut -f1)
+      # #     echo "MASTER_SHA=$MASTER_SHA" >> $GITHUB_ENV
+      # #     echo "master_sha=$MASTER_SHA" >> $GITHUB_OUTPUT
+          
+      # #     # Get the latest master commit date and message
+      # #     git fetch upstream master
+      # #     MASTER_DATE=$(git log -1 --format=%cd --date=format:%y%m%d upstream/master)
+      # #     MASTER_MESSAGE=$(git log -1 --format=%s upstream/master)
+      # #     echo "MASTER_DATE=$MASTER_DATE" >> $GITHUB_ENV
+      # #     echo "MASTER_MESSAGE=$MASTER_MESSAGE" >> $GITHUB_ENV
+
+      # - name: Pull changes from upstream if release commit is found
+      #   if: steps.check_commit.outputs.should_pull == 'true'
+      #   run: |
+      #     # Get latest master Release tag
+      #     # LATEST_TAG=$(git ls-remote --tags --sort=-committerdate upstream | head -n 1 | sed 's/.*refs\/tags\///' | sed 's/\^{}//')
+      #     LATEST_TAG=$(git log -1 --format=%s origin/master..upstream/master --grep="Release" | awk '{print $2}')
       #     echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
       #     echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
 
-      #     # Get latest master commit SHA hash
-      #     MASTER_SHA=$(git ls-remote upstream HEAD | cut -f1)
+      #     # Get latest master Release commit SHA hash
+      #     # MASTER_SHA=$(git ls-remote upstream HEAD | cut -f1)
+      #     MASTER_SHA=$(git log origin/master..upstream/master --grep="Release" --oneline | awk '{print $1}')
       #     echo "MASTER_SHA=$MASTER_SHA" >> $GITHUB_ENV
       #     echo "master_sha=$MASTER_SHA" >> $GITHUB_OUTPUT
-          
-      #     # Get the latest master commit date and message
+
+      #     # Get the master Release commit date and message
       #     git fetch upstream master
-      #     MASTER_DATE=$(git log -1 --format=%cd --date=format:%y%m%d upstream/master)
-      #     MASTER_MESSAGE=$(git log -1 --format=%s upstream/master)
+      #     # MASTER_DATE=$(git log -1 --format=%cd --date=format:%y%m%d upstream/master)
+      #     MASTER_DATE=$(git log -1 --format=%cd --date=format:%y%m%d origin/master..upstream/master --grep="Release")
+      #     # MASTER_MESSAGE=$(git log -1 --format=%s upstream/master)
+      #     MASTER_MESSAGE=$(git log -1 --format=%s origin/master..upstream/master --grep="Release")
       #     echo "MASTER_DATE=$MASTER_DATE" >> $GITHUB_ENV
       #     echo "MASTER_MESSAGE=$MASTER_MESSAGE" >> $GITHUB_ENV
 
-      - name: Pull changes from upstream if release commit is found
-        if: steps.check_commit.outputs.should_pull == 'true'
-        run: |
-          # Get latest master Release tag
-          # LATEST_TAG=$(git ls-remote --tags --sort=-committerdate upstream | head -n 1 | sed 's/.*refs\/tags\///' | sed 's/\^{}//')
-          LATEST_TAG=$(git log -1 --format=%s origin/master..upstream/master --grep="Release" | awk '{print $2}')
-          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
-          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
-
-          # Get latest master Release commit SHA hash
-          # MASTER_SHA=$(git ls-remote upstream HEAD | cut -f1)
-          MASTER_SHA=$(git log origin/master..upstream/master --grep="Release" --oneline | awk '{print $1}')
-          echo "MASTER_SHA=$MASTER_SHA" >> $GITHUB_ENV
-          echo "master_sha=$MASTER_SHA" >> $GITHUB_OUTPUT
-
-          # Get the master Release commit date and message
-          git fetch upstream master
-          # MASTER_DATE=$(git log -1 --format=%cd --date=format:%y%m%d upstream/master)
-          MASTER_DATE=$(git log -1 --format=%cd --date=format:%y%m%d origin/master..upstream/master --grep="Release")
-          # MASTER_MESSAGE=$(git log -1 --format=%s upstream/master)
-          MASTER_MESSAGE=$(git log -1 --format=%s origin/master..upstream/master --grep="Release")
-          echo "MASTER_DATE=$MASTER_DATE" >> $GITHUB_ENV
-          echo "MASTER_MESSAGE=$MASTER_MESSAGE" >> $GITHUB_ENV
-
-      - name: Read last state
-        id: last_state
-        if: success()
-        run: |
-          if [ -f .github/limesurvey_state.json ]; then
-            LAST_TAG=$(jq -r '.last_tag' .github/limesurvey_state.json)
-            LAST_SHA=$(jq -r '.last_master_sha' .github/limesurvey_state.json)
-          else
-            LAST_TAG=""
-            LAST_SHA=""
-          fi
+      # - name: Read last state
+      #   id: last_state
+      #   if: success()
+      #   run: |
+      #     if [ -f .github/limesurvey_state.json ]; then
+      #       LAST_TAG=$(jq -r '.last_tag' .github/limesurvey_state.json)
+      #       LAST_SHA=$(jq -r '.last_master_sha' .github/limesurvey_state.json)
+      #     else
+      #       LAST_TAG=""
+      #       LAST_SHA=""
+      #     fi
           
-          echo "LAST_TAG=$LAST_TAG" >> $GITHUB_ENV
-          echo "LAST_SHA=$LAST_SHA" >> $GITHUB_ENV
-          echo "last_tag=$LAST_TAG" >> $GITHUB_OUTPUT
-          echo "last_master_sha=$LAST_SHA" >> $GITHUB_OUTPUT
+      #     echo "LAST_TAG=$LAST_TAG" >> $GITHUB_ENV
+      #     echo "LAST_SHA=$LAST_SHA" >> $GITHUB_ENV
+      #     echo "last_tag=$LAST_TAG" >> $GITHUB_OUTPUT
+      #     echo "last_master_sha=$LAST_SHA" >> $GITHUB_OUTPUT
 
-      - name: Determine if update needed
-        if: success()
-        id: check_update
-        run: |
-          # Initialize variables
-          TAG_CHANGED="false"
-          MASTER_CHANGED="false"
-          CUSTOM_TAG=""
+      # - name: Determine if update needed
+      #   if: success()
+      #   id: check_update
+      #   run: |
+      #     # Initialize variables
+      #     TAG_CHANGED="false"
+      #     MASTER_CHANGED="false"
+      #     CUSTOM_TAG=""
           
-          # Define tag format params
-          TAG_SUFFIX="${{ vars.TAG_SUFFIX || 'cd' }}"
-          TAG_SEPARATOR="${{ vars.TAG_SEPARATOR || '-' }}"
+      #     # Define tag format params
+      #     TAG_SUFFIX="${{ vars.TAG_SUFFIX || 'cd' }}"
+      #     TAG_SEPARATOR="${{ vars.TAG_SEPARATOR || '-' }}"
           
-          # Check if tag has changed
-          if [ "${{ env.LATEST_TAG }}" != "" ] && [ "${{ env.LATEST_TAG }}" != "${{ env.LAST_TAG }}" ]; then
-            echo "New tag detected: ${{ env.LATEST_TAG }} (was: ${{ env.LAST_TAG }})"
-            TAG_CHANGED="true"
+      #     # Check if tag has changed
+      #     if [ "${{ env.LATEST_TAG }}" != "" ] && [ "${{ env.LATEST_TAG }}" != "${{ env.LAST_TAG }}" ]; then
+      #       echo "New tag detected: ${{ env.LATEST_TAG }} (was: ${{ env.LAST_TAG }})"
+      #       TAG_CHANGED="true"
             
-            # Parse LimeSurvey tag to create custom tag
-            if [[ "${{ env.LATEST_TAG }}" =~ ([0-9]+\.[0-9]+\.[0-9]+)\+([0-9]{6}) ]]; then
-              VERSION="${BASH_REMATCH[1]}"
-              DATE="${BASH_REMATCH[2]}"
-              CUSTOM_TAG="${VERSION}+${DATE}${TAG_SEPARATOR}${TAG_SUFFIX}"
-              echo "Created harmonized tag name: $CUSTOM_TAG"
-            else
-              echo "Could not parse upstream tag: ${{ env.LATEST_TAG }}"
-              TAG_CHANGED="false"
-            fi
-          fi
+      #       # Parse LimeSurvey tag to create custom tag
+      #       if [[ "${{ env.LATEST_TAG }}" =~ ([0-9]+\.[0-9]+\.[0-9]+)\+([0-9]{6}) ]]; then
+      #         VERSION="${BASH_REMATCH[1]}"
+      #         DATE="${BASH_REMATCH[2]}"
+      #         CUSTOM_TAG="${VERSION}+${DATE}${TAG_SEPARATOR}${TAG_SUFFIX}"
+      #         echo "Created harmonized tag name: $CUSTOM_TAG"
+      #       else
+      #         echo "Could not parse upstream tag: ${{ env.LATEST_TAG }}"
+      #         TAG_CHANGED="false"
+      #       fi
+      #     fi
           
-          # Check if master has changed
-          if [ "${{ env.MASTER_SHA }}" != "" ] && [ "${{ env.MASTER_SHA }}" != "${{ env.LAST_SHA }}" ]; then
-            echo "New master commit detected: ${MASTER_SHA:0:7} (was: ${LAST_SHA:0:7})"
-            echo "Commit message: ${{ env.MASTER_MESSAGE }}"
-            MASTER_CHANGED="true"
+      #     # Check if master has changed
+      #     if [ "${{ env.MASTER_SHA }}" != "" ] && [ "${{ env.MASTER_SHA }}" != "${{ env.LAST_SHA }}" ]; then
+      #       echo "New master commit detected: ${MASTER_SHA:0:7} (was: ${LAST_SHA:0:7})"
+      #       echo "Commit message: ${{ env.MASTER_MESSAGE }}"
+      #       MASTER_CHANGED="true"
             
-            # Create custom tag for master
-            TODAY=$(date +%y%m%d)
-            CUSTOM_MASTER_TAG="master+${TODAY}${TAG_SEPARATOR}${TAG_SUFFIX}+${MASTER_SHA:0:7}"
-            echo "Created harmonized master tag name: $CUSTOM_MASTER_TAG"
+      #       # Create custom tag for master
+      #       TODAY=$(date +%y%m%d)
+      #       CUSTOM_MASTER_TAG="master+${TODAY}${TAG_SEPARATOR}${TAG_SUFFIX}+${MASTER_SHA:0:7}"
+      #       echo "Created harmonized master tag name: $CUSTOM_MASTER_TAG"
             
-            # If no tag change or force update, use master tag
-            if [ "$TAG_CHANGED" = "false" ] || [ "${{ github.event.inputs.force_update }}" = "true" ]; then
-              CUSTOM_TAG="$CUSTOM_MASTER_TAG"
-            fi
-          fi
+      #       # If no tag change or force update, use master tag
+      #       if [ "$TAG_CHANGED" = "false" ] || [ "${{ github.event.inputs.force_update }}" = "true" ]; then
+      #         CUSTOM_TAG="$CUSTOM_MASTER_TAG"
+      #       fi
+      #     fi
           
-          # Set outputs
-          echo "tag_changed=$TAG_CHANGED" >> $GITHUB_OUTPUT
-          echo "master_changed=$MASTER_CHANGED" >> $GITHUB_OUTPUT
-          echo "custom_tag=$CUSTOM_TAG" >> $GITHUB_OUTPUT
+      #     # Set outputs
+      #     echo "tag_changed=$TAG_CHANGED" >> $GITHUB_OUTPUT
+      #     echo "master_changed=$MASTER_CHANGED" >> $GITHUB_OUTPUT
+      #     echo "custom_tag=$CUSTOM_TAG" >> $GITHUB_OUTPUT
           
-          # Determine if any update needed
-          if [ "${{ github.event.inputs.force_update }}" = "true" ] || [ "$TAG_CHANGED" = "true" ] || [ "$MASTER_CHANGED" = "true" ]; then
-            echo "update_needed=true" >> $GITHUB_OUTPUT
-          else
-            echo "update_needed=false" >> $GITHUB_OUTPUT
-          fi
+      #     # Determine if any update needed
+      #     if [ "${{ github.event.inputs.force_update }}" = "true" ] || [ "$TAG_CHANGED" = "true" ] || [ "$MASTER_CHANGED" = "true" ]; then
+      #       echo "update_needed=true" >> $GITHUB_OUTPUT
+      #     else
+      #       echo "update_needed=false" >> $GITHUB_OUTPUT
+      #     fi
 
-      - name: Update and tag
-        if: success() && steps.check_update.outputs.update_needed == 'true'
-        run: |
-          echo "Updating fork with upstream changes..."
+      # - name: Update and tag
+      #   if: success() && steps.check_update.outputs.update_needed == 'true'
+      #   run: |
+      #     echo "Updating fork with upstream changes..."
           
-          # Get current branch name
-          CURRENT_BRANCH=$(git branch --show-current)
+      #     # Get current branch name
+      #     CURRENT_BRANCH=$(git branch --show-current)
           
-          # Determine update method
-          UPDATE_METHOD="${{ github.event.inputs.update_method || 'rebase' }}"
+      #     # Determine update method
+      #     UPDATE_METHOD="${{ github.event.inputs.update_method || 'rebase' }}"
           
-          # If tag changed, update to tag
-          if [ "${{ steps.check_update.outputs.tag_changed }}" = "true" ]; then
-            echo "Updating to latest Release: ${{ env.LATEST_TAG }}"
-            # Pull
-            if [ "$UPDATE_METHOD" = "rebase" ]; then
-                git pull --rebase upstream master
-            fi
-          fi
+      #     # If tag changed, update to tag
+      #     if [ "${{ steps.check_update.outputs.tag_changed }}" = "true" ]; then
+      #       echo "Updating to latest Release: ${{ env.LATEST_TAG }}"
+      #       # Pull
+      #       if [ "$UPDATE_METHOD" = "rebase" ]; then
+      #           git pull --rebase upstream master
+      #       fi
+      #     fi
           
-          # Create custom tag
-          if [ "${{ steps.check_update.outputs.custom_tag }}" != "" ]; then
-            echo "Creating harmonized tag: ${{ steps.check_update.outputs.custom_tag }}"
-            if [[ "${{ steps.check_update.outputs.custom_tag }}" == master+* ]]; then
-              git tag -a "${{ steps.check_update.outputs.custom_tag }}" -m "Harmonized tag from upstream master ${{ env.MASTER_SHA }}"
-            else
-              git tag -a "${{ steps.check_update.outputs.custom_tag }}" -m "Harmonized tag for upstream ${{ env.LATEST_TAG }}"
-            fi
-          fi
+      #     # Create custom tag
+      #     if [ "${{ steps.check_update.outputs.custom_tag }}" != "" ]; then
+      #       echo "Creating harmonized tag: ${{ steps.check_update.outputs.custom_tag }}"
+      #       if [[ "${{ steps.check_update.outputs.custom_tag }}" == master+* ]]; then
+      #         git tag -a "${{ steps.check_update.outputs.custom_tag }}" -m "Harmonized tag from upstream master ${{ env.MASTER_SHA }}"
+      #       else
+      #         git tag -a "${{ steps.check_update.outputs.custom_tag }}" -m "Harmonized tag for upstream ${{ env.LATEST_TAG }}"
+      #       fi
+      #     fi
           
-          # Push changes
-          git pull --rebase origin $(git branch --show-current)
-          git push origin $CURRENT_BRANCH
-          git push origin --tags
+      #     # Push changes
+      #     git pull --rebase origin $(git branch --show-current)
+      #     git push origin $CURRENT_BRANCH
+      #     git push origin --tags
 
-      - name: Update state file
-        if: success() && steps.check_update.outputs.update_needed == 'true'
-        run: |
-          git pull --rebase origin $(git branch --show-current)
-          mkdir -p .github
-          cat > .github/limesurvey_state.json << EOF
-          {
-            "last_tag": "${{ env.LATEST_TAG }}",
-            "last_master_sha": "${{ env.MASTER_SHA }}",
-            "last_updated": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-          }
-          EOF
-          git add .github/limesurvey_state.json
-          git commit -m "Update LimeSurvey state tracking [skip ci]"
-          git push origin $(git branch --show-current)
+      # - name: Update state file
+      #   if: success() && steps.check_update.outputs.update_needed == 'true'
+      #   run: |
+      #     git pull --rebase origin $(git branch --show-current)
+      #     mkdir -p .github
+      #     cat > .github/limesurvey_state.json << EOF
+      #     {
+      #       "last_tag": "${{ env.LATEST_TAG }}",
+      #       "last_master_sha": "${{ env.MASTER_SHA }}",
+      #       "last_updated": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+      #     }
+      #     EOF
+      #     git add .github/limesurvey_state.json
+      #     git commit -m "Update LimeSurvey state tracking [skip ci]"
+      #     git push origin $(git branch --show-current)
 
-      - name: Build asset
-        if: success() && steps.check_update.outputs.update_needed == 'true'
-        run: |
-          git archive --prefix=limesurvey/ -o limesurvey.zip ${{ env.MASTER_SHA }}
-          echo "Building asset was successll"
-      - name: No updates needed
-        if: steps.check_update.outputs.update_needed != 'true'
-        run: echo "No updates needed. Everything is up to date."
+      # - name: Build asset
+      #   if: success() && steps.check_update.outputs.update_needed == 'true'
+      #   run: |
+      #     git archive --prefix=limesurvey/ -o limesurvey.zip ${{ env.MASTER_SHA }}
+      #     echo "Building asset was successll"
+      # - name: No updates needed
+      #   if: steps.check_update.outputs.update_needed != 'true'
+      #   run: echo "No updates needed. Everything is up to date."
